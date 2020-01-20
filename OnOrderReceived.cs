@@ -15,12 +15,14 @@ namespace _4service_dev_functions
         [FunctionName("OnOrderReceived")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [Queue("orders")] IAsyncCollector<Entity> orderQueue,
             ILogger log)
         {
             log.LogInformation("Received an order.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var order = JsonConvert.DeserializeObject<Entity>(requestBody);
+            await orderQueue.AddAsync(order);
             log.LogInformation($"Order received for {order.Id} at {order.Created}");
             return new OkObjectResult($"Order received");
         }
